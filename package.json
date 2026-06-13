@@ -1,0 +1,28 @@
+{
+  "name": "biblia-help-backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node server-dev.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix"
+  },
+  "dependencies": {
+    "axios": "^1.13.2",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.9.2",
+    "mongoose": "^9.1.5"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.1",
+    "eslint": "^8.57.1",
+    "vitest": "^1.6.1"
+  }
+}

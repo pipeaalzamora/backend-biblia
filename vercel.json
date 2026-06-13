@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/suggest-verses",
+      "destination": "/api/suggest-verses.js"
+    }
+  ],
+  "functions": {
+    "api/suggest-verses.js": {
+      "maxDuration": 30
+    }
+  }
+}
