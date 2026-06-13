@@ -2,13 +2,12 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/suggest-verses",
-      "destination": "/api/suggest-verses.js"
+      "source": "/api/get-verses",
+      "destination": "/api/get-verses.js"
+    },
+    {
+      "source": "/api/sync-favorites",
+      "destination": "/api/sync-favorites.js"
     }
-  ],
-  "functions": {
-    "api/suggest-verses.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
