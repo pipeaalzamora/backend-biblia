@@ -10,6 +10,8 @@ import { logger } from "./utils/logger.js";
 import { obtenerVersiculosCompletos } from "./utils/bibleApi.js";
 import { connectDB, isDBConnected } from "./config/database.js";
 import { connectRedis } from "./config/redis.js";
+import { registrarBusqueda } from "./services/analyticsService.js";
+import { getCache, setCache } from "./services/cacheService.js";
 import { rateLimiter } from "./middleware/rateLimiter.js";
 
 // Cargar variables de entorno
@@ -54,6 +56,57 @@ app.use(cors({
 }));
 
 app.use(express.json({ limit: "10kb" }));
+
+// Endpoint de IA OPCIONAL. Si GEMINI_API_KEY no está configurada, responde
+// success:false y el cliente cae a su búsqueda local. Nunca tumba el servidor.
+app.post("/api/suggest-verses", rateLimiter("anonymous"), async (req, res) => {
+  const startTime = Date.now();
+  const ipCliente =
+    req.headers["x-forwarded-for"] || req.connection?.remoteAddress || "desconocida";
+
+  try {
+    const { sugerirVersiculos, iaConfigurada } = await import("./services/iaService.js");
+
+    if (!iaConfigurada()) {
+      return res.status(200).json({
+        success: false,
+        error: "IA no configurada en el servidor",
+        versiculos: [],
+      });
+    }
+
+    const { userInput } = req.body;
+
+    // Caché Redis: evita llamar al modelo para consultas repetidas.
+    const cacheKey = `suggest:${String(userInput || "").toLowerCase().trim().substring(0, 100)}`;
+    const cached = await getCache(cacheKey);
+    if (cached) {
+      return res.status(200).json({ ...cached, fromCache: true });
+    }
+
+    const resultado = await sugerirVersiculos(userInput);
+
+    if (resultado.success) {
+      await setCache(cacheKey, resultado);
+      registrarBusqueda({
+        userInput,
+        versiculos: resultado.versiculos,
+        success: true,
+        ip: ipCliente,
+        responseTime: Date.now() - startTime,
+      }).catch(() => {});
+    }
+
+    return res.status(200).json(resultado);
+  } catch (error) {
+    logger.error("Error en suggest-verses", { error: error.message });
+    return res.status(200).json({
+      success: false,
+      error: "No se pudo generar la sugerencia",
+      versiculos: [],
+    });
+  }
+});
 
 // Endpoint para obtener versículos completos por referencia
 app.post("/api/get-verses", rateLimiter("anonymous"), async (req, res) => {
